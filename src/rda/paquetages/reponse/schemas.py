@@ -1,0 +1,43 @@
+from datetime import date
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+
+class CitationSortie(BaseModel):
+    rang: int
+    reference_normative: str
+    extrait_affiche: str
+    id_passage: UUID
+    id_version: UUID
+    page: int
+
+
+class QuestionEntree(BaseModel):
+    question: str = Field(min_length=3)
+    id_conversation: UUID | None = None
+    date_reference: date | None = None
+    canal: str = "WEB"
+
+
+class ReponseQuestion(BaseModel):
+    mode: str
+    reponse: str
+    confiance: float
+    seuil: float
+    perimetre: str
+    citations: list[CitationSortie]
+
+
+class SignalementEntree(BaseModel):
+    type_probleme: str
+    commentaire: str | None = None
+
+
+class SourceSortie(BaseModel):
+    id_passage: UUID
+    id_version: UUID
+    reference_normative: str
+    page: int
+    url: str
+

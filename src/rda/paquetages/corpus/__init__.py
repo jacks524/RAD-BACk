@@ -1,0 +1,2 @@
+"""Paquetage corpus."""
+

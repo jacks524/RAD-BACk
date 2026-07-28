@@ -1,0 +1,2 @@
+"""Noyau agentique RDA."""
+
