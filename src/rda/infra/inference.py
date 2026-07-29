@@ -16,17 +16,17 @@ class ClientInference:
             reponse = await client.get(f"{self.base_url}/health")
             return reponse.status_code < 500
 
-    async def generer(self, *, systeme: str, contexte: str, question: str) -> str:
+    async def generer(self, *, systeme: str, contexte: str, question: str, max_tokens: int = 300) -> str:
         charge: dict[str, Any] = {
             "messages": [
                 {"role": "system", "content": systeme},
                 {"role": "user", "content": f"CONTEXTE:\n{contexte}\n\nQUESTION:\n{question}"},
             ],
             "temperature": 0.1,
+            "max_tokens": max_tokens,
         }
-        async with httpx.AsyncClient(timeout=20) as client:
+        async with httpx.AsyncClient(timeout=90) as client:
             reponse = await client.post(f"{self.base_url}/v1/chat/completions", json=charge)
             reponse.raise_for_status()
             donnees = reponse.json()
             return donnees["choices"][0]["message"]["content"]
-

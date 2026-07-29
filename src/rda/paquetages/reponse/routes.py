@@ -1,20 +1,30 @@
 from datetime import date
+import subprocess
+import tempfile
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, Response, status
 
-from rda.paquetages.reponse.schemas import QuestionEntree, ReponseQuestion, SignalementEntree, SourceSortie
+from rda.paquetages.reponse.schemas import (
+    QuestionEntree,
+    ReponseQuestion,
+    SignalementEntree,
+    SourceSortie,
+    SyntheseVocaleEntree,
+)
 from rda.paquetages.reponse.service import ServiceReponse
 
 routeur = APIRouter(tags=["dialogue"])
+service_reponse = ServiceReponse()
 
 
 def obtenir_groupes_demo(x_groupes_agent: str | None = Header(default=None)) -> list[str]:
-    return [g.strip() for g in (x_groupes_agent or "").split(",") if g.strip()]
+    groupes = [g.strip() for g in (x_groupes_agent or "").split(",") if g.strip()]
+    return groupes or ["DEMO_SECURITE", "SECURITE"]
 
 
 def obtenir_service_reponse() -> ServiceReponse:
-    return ServiceReponse()
+    return service_reponse
 
 
 @routeur.post("/questions", response_model=ReponseQuestion)
@@ -62,6 +72,12 @@ async def transcrire_vocal() -> dict:
 
 
 @routeur.post("/vocal/synthese")
-async def synthetiser_vocal() -> Response:
-    return Response(content=b"", media_type="audio/wav")
-
+async def synthetiser_vocal(entree: SyntheseVocaleEntree) -> Response:
+    with tempfile.NamedTemporaryFile(suffix=".wav") as sortie:
+        subprocess.run(
+            ["espeak-ng", "-v", "fr-fr", "-s", "155", "-w", sortie.name, entree.texte],
+            check=True,
+            timeout=20,
+        )
+        sortie.seek(0)
+        return Response(content=sortie.read(), media_type="audio/wav")

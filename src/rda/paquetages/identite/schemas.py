@@ -14,8 +14,27 @@ class AgentSortie(BaseModel):
     courriel: str
     nom: str = ""
     prenom: str = ""
+    matricule: str = ""
+    poste: str = ""
+    structure: str = ""
+    statut: str = "ACTIF"
     groupes_resolus: list[str] = []
     roles: list[str] = []
+    droits: list[dict] = []
+
+
+class AgentCreationEntree(BaseModel):
+    matricule: str
+    courriel: str
+    nom: str
+    prenom: str
+    mot_de_passe: str
+    poste: str = ""
+    structure: str = ""
+    statut: str = "ACTIF"
+    groupes_poste: list[str] = ["DEMO_SECURITE"]
+    habilitations_exception: list[dict] = []
+    roles: list[str] = ["AGENT"]
 
 
 class ConnexionSortie(BaseModel):

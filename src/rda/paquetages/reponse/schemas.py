@@ -14,7 +14,7 @@ class CitationSortie(BaseModel):
 
 
 class QuestionEntree(BaseModel):
-    question: str = Field(min_length=3)
+    question: str = Field(min_length=1)
     id_conversation: UUID | None = None
     date_reference: date | None = None
     canal: str = "WEB"
@@ -34,10 +34,13 @@ class SignalementEntree(BaseModel):
     commentaire: str | None = None
 
 
+class SyntheseVocaleEntree(BaseModel):
+    texte: str = Field(min_length=1, max_length=1200)
+
+
 class SourceSortie(BaseModel):
     id_passage: UUID
     id_version: UUID
     reference_normative: str
     page: int
     url: str
-

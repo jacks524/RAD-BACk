@@ -8,7 +8,9 @@ from rda.config import obtenir_parametres
 from rda.infra.inference import ClientInference
 from rda.noyau.agent import AgentRDA
 from rda.paquetages.corpus.routes import routeur as routeur_corpus
+from rda.paquetages.reponse.artefacts import charger_passages
 from rda.paquetages.identite.routes import routeur as routeur_identite
+from rda.paquetages.reponse.routes import service_reponse
 from rda.paquetages.reponse.routes import routeur as routeur_reponse
 
 
@@ -18,6 +20,9 @@ async def initialiser_artefacts() -> None:
     La phase reelle d'import est portee par les services d'ingestion; ce point garde le demarrage
     idempotent et documente le contrat.
     """
+    parametres = obtenir_parametres()
+    passages = charger_passages(parametres.artefacts_dir)
+    service_reponse.passages_demo = passages
 
 
 @asynccontextmanager
@@ -60,4 +65,3 @@ def creer_application() -> FastAPI:
 
 
 app = creer_application()
-

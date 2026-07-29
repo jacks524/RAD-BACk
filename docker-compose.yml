@@ -17,7 +17,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ${KALATI_DATA:-./data}/artefacts:/app/artefacts:ro
+      - /mnt/kalati/Camrail-Challenge/kalati-data/artefacts:/app/artefacts:ro
+      - /mnt/kalati/Camrail-Challenge/kalati-data/identite-demo:/app/identite-demo
     networks:
       - rda-app
       - rda-corpus
@@ -26,11 +27,11 @@ services:
       - rda-donnees
 
   rda-inference:
-    image: ghcr.io/ggerganov/llama.cpp:server
+    image: ghcr.io/ggml-org/llama.cpp:server
     container_name: rda-inference
-    command: ["-m", "/models/modele.gguf", "--host", "0.0.0.0", "--port", "8080"]
+    command: ["-m", "/models/Qwen2.5-7B-Instruct-Q4_0.gguf", "--host", "0.0.0.0", "--port", "8080"]
     volumes:
-      - ${KALATI_DATA:-./data}/modeles:/models:ro
+      - /mnt/kalati/Camrail-Challenge/kalati-data/modeles:/models:ro
     networks:
       - rda-app
 
@@ -47,7 +48,7 @@ services:
       timeout: 3s
       retries: 20
     volumes:
-      - vol-corpus:/var/lib/postgresql/data
+      - /mnt/kalati/Camrail-Challenge/kalati-data/postgres/corpus:/var/lib/postgresql/data
     networks:
       - rda-corpus
 
@@ -64,7 +65,7 @@ services:
       timeout: 3s
       retries: 20
     volumes:
-      - vol-identite:/var/lib/postgresql/data
+      - /mnt/kalati/Camrail-Challenge/kalati-data/postgres/identite:/var/lib/postgresql/data
     networks:
       - rda-identite
 
@@ -81,7 +82,7 @@ services:
       timeout: 3s
       retries: 20
     volumes:
-      - vol-intelligence:/var/lib/postgresql/data
+      - /mnt/kalati/Camrail-Challenge/kalati-data/postgres/intelligence:/var/lib/postgresql/data
     networks:
       - rda-intelligence
 
@@ -98,32 +99,32 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - ${KALATI_DATA:-./data}/redis:/data/redis
-      - ${KALATI_DATA:-./data}/minio:/data/minio
+      - /mnt/kalati/Camrail-Challenge/kalati-data/redis:/data/redis
+      - /mnt/kalati/Camrail-Challenge/kalati-data/minio:/data/minio
     networks:
       - rda-donnees
 
   rda-front-admin:
     build:
-      context: ../RAD-FRONT/kalati_admin
+      context: /mnt/kalati/Camrail-Challenge/RAD-FRONT/kalati_admin
       dockerfile: Dockerfile
       args:
         KALATI_API_BASE_URL: http://localhost:8000/api/v1
     container_name: rda-front-admin
     ports:
-      - "8080:80"
+      - "8080:3000"
     networks:
       - rda-app
 
   rda-front-agent:
     build:
-      context: ../RAD-FRONT/kalati_agent
+      context: /mnt/kalati/Camrail-Challenge/RAD-FRONT/kalati_agent
       dockerfile: Dockerfile
       args:
         KALATI_API_BASE_URL: http://localhost:8000/api/v1
     container_name: rda-front-agent
     volumes:
-      - ${KALATI_DATA:-./data}/builds-agent:/sorties
+      - /mnt/kalati/Camrail-Challenge/kalati-data/builds-agent:/sorties
     networks:
       - rda-app
 
@@ -133,8 +134,3 @@ networks:
   rda-identite:
   rda-intelligence:
   rda-donnees:
-
-volumes:
-  vol-corpus:
-  vol-identite:
-  vol-intelligence:
