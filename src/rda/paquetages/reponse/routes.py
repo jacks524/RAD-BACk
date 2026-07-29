@@ -3,8 +3,9 @@ import subprocess
 import tempfile
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, Response, status
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Response, UploadFile, status
 
+from rda.infra.transcription import ServiceTranscription
 from rda.paquetages.reponse.schemas import (
     QuestionEntree,
     ReponseQuestion,
@@ -16,6 +17,7 @@ from rda.paquetages.reponse.service import ServiceReponse
 
 routeur = APIRouter(tags=["dialogue"])
 service_reponse = ServiceReponse()
+service_transcription = ServiceTranscription()
 
 
 def obtenir_groupes_demo(x_groupes_agent: str | None = Header(default=None)) -> list[str]:
@@ -67,8 +69,13 @@ async def lire_source(id_passage: UUID) -> SourceSortie:
 
 
 @routeur.post("/vocal/transcription")
-async def transcrire_vocal() -> dict:
-    return {"transcription": "", "confiance": 0.0}
+async def transcrire_vocal(audio: UploadFile = File(...)) -> dict:
+    contenu = await audio.read()
+    if not contenu:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Fichier audio vide.")
+    suffixe = "." + (audio.filename or "question.m4a").rsplit(".", 1)[-1].lower()
+    resultat = await service_transcription.transcrire(contenu, suffixe=suffixe)
+    return {"transcription": resultat.transcription, "confiance": resultat.confiance}
 
 
 @routeur.post("/vocal/synthese")

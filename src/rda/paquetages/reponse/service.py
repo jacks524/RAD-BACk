@@ -115,7 +115,10 @@ class ServiceReponse:
         )
 
     def _est_conversationnel(self, question: str) -> bool:
-        normalisee = " ".join(question.strip().lower().replace("?", "").replace("!", "").split())
+        normalisee = question.strip().lower()
+        for ponctuation in ("?", "!", ".", ",", ";", ":"):
+            normalisee = normalisee.replace(ponctuation, "")
+        normalisee = " ".join(normalisee.split())
         return normalisee in SALUTATIONS
 
     async def _generer_reponse(self, question: str, retenus: list[PassageReclasse]) -> str:

@@ -35,6 +35,8 @@ class Parametres(BaseSettings):
 
     inference_url: str = "http://localhost:8080"
     artefacts_dir: Path = Path("artefacts")
+    stt_modele: str = "small"
+    stt_modeles_dir: Path = Path("/app/modeles/stt")
 
     seuil_generatif: float = 0.80
     message_abstention: str = (
@@ -52,4 +54,3 @@ def obtenir_parametres() -> Parametres:
     """Retourne les parametres mis en cache."""
 
     return Parametres()
-

@@ -19,6 +19,7 @@ services:
     volumes:
       - /mnt/kalati/Camrail-Challenge/kalati-data/artefacts:/app/artefacts:ro
       - /mnt/kalati/Camrail-Challenge/kalati-data/identite-demo:/app/identite-demo
+      - /mnt/kalati/Camrail-Challenge/kalati-data/modeles:/app/modeles
     networks:
       - rda-app
       - rda-corpus
