@@ -86,7 +86,8 @@ class ServiceReponse:
         retenus, confiance = reclasser(candidats)
         mode = deliberer(confiance, seuil, self.politique.seuil_generatif)
         if mode == ModeReponse.GENERATIF:
-            texte = await self._generer_reponse(question, retenus)
+            # Mode demo CPU : evite l'appel LLM local, trop lent sans GPU.
+            texte = self._reponse_locale_courte(retenus)
         else:
             texte = rediger(mode, retenus)
 
@@ -124,12 +125,12 @@ class ServiceReponse:
     async def _generer_reponse(self, question: str, retenus: list[PassageReclasse]) -> str:
         contexte = "\n\n".join(
             f"[{rang}] {retenu.candidat.passage.reference_normative}, page {retenu.candidat.passage.page}\n"
-            f"{retenu.candidat.passage.texte[:1800]}"
-            for rang, retenu in enumerate(retenus[:3], start=1)
+            f"{retenu.candidat.passage.texte[:650]}"
+            for rang, retenu in enumerate(retenus[:2], start=1)
         )
         systeme = (
             "Tu es l'assistant documentaire KALATI. Réponds en français avec une synthèse courte "
-            "de 3 à 6 phrases maximum. Cite les sources sous la forme [1], [2] quand tu utilises "
+            "de 2 à 3 phrases maximum. Cite les sources sous la forme [1], [2] quand tu utilises "
             "un extrait. Ne recopie jamais les extraits in extenso, ne liste pas des blocs bruts, "
             "et n'invente rien hors du contexte fourni."
         )
@@ -138,7 +139,7 @@ class ServiceReponse:
                 systeme=systeme,
                 contexte=contexte,
                 question=question,
-                max_tokens=300,
+                max_tokens=120,
             )
         except Exception:
             return self._reponse_locale_courte(retenus)
@@ -171,47 +172,50 @@ class ServiceReponse:
             return rediger(ModeReponse.ABSTENTION, retenus)
 
         passage = retenus[0].candidat.passage
-        texte = " ".join(passage.texte.split())
-        consigne = self._extraire_consigne(texte)
-        if consigne:
-            return f"{consigne} [1]"
-
-        phrases = re.split(r"(?<=[.!?])\s+", texte)
-        phrases_utiles = [
-            phrase
-            for phrase in phrases
-            if len(phrase) >= 40
-            and not phrase.startswith(("EPSF", "RC ", "DC ", "FORM", "COR "))
-            and "JOURNAL OFFICIEL" not in phrase
-        ][:3]
+        texte = self._nettoyer_texte_passage(passage.texte)
+        phrases = self._phrases_completes(texte)
+        phrases_utiles = self._selectionner_phrases_utiles(phrases)
         if not phrases_utiles:
-            phrases_utiles = [texte[:450].strip()]
+            phrases_utiles = self._fallback_extrait_propre(texte)
 
-        resume = " ".join(phrases_utiles)
-        if len(resume) > 700:
-            resume = resume[:700].rsplit(" ", 1)[0] + "."
+        resume = " ".join(phrases_utiles[:3]).strip()
+        if not resume.endswith((".", "!", "?")):
+            resume = resume.rstrip(" ;:,") + "."
         return f"{resume} [{1}]"
 
-    def _extraire_consigne(self, texte: str) -> str | None:
-        obligations: list[str] = []
-        for motif in (r"le conducteur doit\s+(.+?)(?=\.|;| Toutefois| Sur voie|$)", r"Le conducteur\s*:\s*(.+?)(?=Autre cas|$)"):
-            correspondance = re.search(motif, texte, flags=re.IGNORECASE)
-            if correspondance:
-                extrait = correspondance.group(1)
-                extrait = re.sub(r"\s*[-•]\s*", ", ", extrait)
-                extrait = extrait.strip(" :;,.")
-                if extrait:
-                    obligations.append(f"Le conducteur doit {extrait}.")
-                break
+    def _nettoyer_texte_passage(self, texte: str) -> str:
+        texte = " ".join(texte.split())
+        texte = re.sub(r"\b(FORM|COR|RC|DC)\d*\b", "", texte)
+        return " ".join(texte.split())
 
-        exception = re.search(r"Toutefois\s+(.+?)(?=\.\s|$)", texte, flags=re.IGNORECASE)
-        if exception:
-            obligations.append(f"Exception ou allègement possible : {exception.group(1).strip(' :;,.')}.")
+    def _phrases_completes(self, texte: str) -> list[str]:
+        phrases = re.split(r"(?<=[.!?])\s+(?=[A-ZÉÈÀÂÎÔÙÇ0-9])", texte)
+        return [p.strip(" ;:,\t") for p in phrases if self._phrase_complete(p)]
 
-        if not obligations:
-            return None
-        obligations.append("La consigne exacte doit être appliquée selon le type de ligne et la situation rencontrée.")
-        return " ".join(obligations[:3])
+    def _phrase_complete(self, phrase: str) -> bool:
+        phrase = phrase.strip()
+        if len(phrase) < 45 or len(phrase) > 420:
+            return False
+        if "JOURNAL OFFICIEL" in phrase:
+            return False
+        if phrase.startswith(("EPSF", "Lien Titre", "Arrêté du")):
+            return False
+        if re.search(r"\b[CD]\.$", phrase):
+            return False
+        return phrase.endswith((".", "!", "?"))
+
+    def _selectionner_phrases_utiles(self, phrases: list[str]) -> list[str]:
+        priorites = ("marche à vue", "marche a vue", "conducteur doit", "doivent observer")
+        selection = [p for p in phrases if any(mot in p.lower() for mot in priorites)]
+        if len(selection) < 2:
+            selection.extend(p for p in phrases if p not in selection)
+        return selection[:3]
+
+    def _fallback_extrait_propre(self, texte: str) -> list[str]:
+        extrait = texte[:520].rsplit(" ", 1)[0].strip(" ;:,.")
+        if not extrait:
+            return []
+        return [extrait + "."]
 
     def _citations(self, retenus: list[PassageReclasse]) -> list[CitationSortie]:
         sorties = []

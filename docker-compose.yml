@@ -30,7 +30,17 @@ services:
   rda-inference:
     image: ghcr.io/ggml-org/llama.cpp:server
     container_name: rda-inference
-    command: ["-m", "/models/Qwen2.5-7B-Instruct-Q4_0.gguf", "--host", "0.0.0.0", "--port", "8080"]
+    ports:
+      - "8088:8080"
+    command:
+      [
+        "-m", "/models/qwen2.5-1.5b-instruct-q4_k_m.gguf",
+        "--host", "0.0.0.0",
+        "--port", "8080",
+        "--threads", "4",
+        "--ctx-size", "1024",
+        "--batch-size", "256"
+      ]
     volumes:
       - /mnt/kalati/Camrail-Challenge/kalati-data/modeles:/models:ro
     networks:
