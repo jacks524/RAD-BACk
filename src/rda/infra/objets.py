@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a objets."""
+
 from datetime import timedelta
 
 from minio import Minio

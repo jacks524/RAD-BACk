@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a ingestion."""
+
 import asyncio
 from collections.abc import Awaitable, Callable
 

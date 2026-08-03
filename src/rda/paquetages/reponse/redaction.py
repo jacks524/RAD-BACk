@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a redaction."""
+
 from rda.config import obtenir_parametres
 from rda.commun.types import ModeReponse
 from rda.paquetages.reponse.reclassement import PassageReclasse

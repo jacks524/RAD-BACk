@@ -1,3 +1,5 @@
+"""Recherche hybride en memoire combinant score lexical et vecteur simplifie pour la demo."""
+
 from dataclasses import dataclass
 from datetime import date
 from math import sqrt

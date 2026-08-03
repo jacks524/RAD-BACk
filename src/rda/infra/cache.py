@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a cache."""
+
 from hashlib import sha256
 
 from redis.asyncio import Redis

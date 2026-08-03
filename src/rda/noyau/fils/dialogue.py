@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a dialogue."""
+
 import asyncio
 
 from rda.noyau.fils.base import Fil

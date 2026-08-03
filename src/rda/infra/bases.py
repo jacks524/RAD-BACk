@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a bases."""
+
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated

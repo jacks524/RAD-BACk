@@ -1,3 +1,5 @@
+"""Modeles SQLAlchemy representant les tables de ce paquetage fonctionnel."""
+
 from datetime import date, datetime
 from uuid import UUID, uuid4
 

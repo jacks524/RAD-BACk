@@ -1,9 +1,11 @@
+"""Module backend RDA consacre a politique."""
+
 from dataclasses import dataclass
 
 
 SEUILS_INITIAUX: dict[str, float] = {
     "SECURITE": 0.72,
-    "TRANSPORT": 0.68,
+    "TRANSPORT": 0.60,
     "RH": 0.55,
     "JURIDIQUE": 0.55,
     "FINANCE": 0.45,

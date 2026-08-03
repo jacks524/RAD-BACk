@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a etat."""
+
 from dataclasses import dataclass, field
 from time import monotonic
 

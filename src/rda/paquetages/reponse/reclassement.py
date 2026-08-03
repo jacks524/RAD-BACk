@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a reclassement."""
+
 from dataclasses import dataclass
 from math import exp
 

@@ -1,3 +1,5 @@
+"""Routes FastAPI d authentification et d administration des agents."""
+
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 
 from rda.paquetages.identite.schemas import (

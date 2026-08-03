@@ -1,3 +1,5 @@
+"""Service d identite de demonstration : sessions, agents, roles et droits."""
+
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 import json

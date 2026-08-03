@@ -1,3 +1,5 @@
+"""Service de gestion du corpus documentaire et des operations d ingestion."""
+
 from datetime import UTC, datetime
 from uuid import uuid4
 

@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a indexation."""
+
 from rda.paquetages.reponse.recherche import vecteur_question
 
 

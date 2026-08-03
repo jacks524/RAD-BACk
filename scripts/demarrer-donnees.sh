@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Demarre les services de donnees embarques utilises par la stack Docker locale.
 set -euo pipefail
 
 mkdir -p /data/redis /data/minio

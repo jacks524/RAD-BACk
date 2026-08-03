@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a extraction."""
+
 from dataclasses import dataclass
 
 

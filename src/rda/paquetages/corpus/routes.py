@@ -1,3 +1,5 @@
+"""Routes FastAPI exposees par ce paquetage fonctionnel."""
+
 from uuid import UUID
 
 from fastapi import APIRouter, File, UploadFile, status

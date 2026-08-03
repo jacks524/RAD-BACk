@@ -1,3 +1,5 @@
+"""Service de transcription vocale locale base sur faster-whisper."""
+
 import asyncio
 import subprocess
 import tempfile

@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a sentinelle."""
+
 import asyncio
 
 from rda.noyau.fils.base import Fil

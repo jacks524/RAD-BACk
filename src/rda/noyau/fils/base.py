@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a base."""
+
 from abc import ABC, abstractmethod
 from asyncio import Task, create_task
 

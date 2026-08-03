@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a segmentation."""
+
 from dataclasses import dataclass
 
 

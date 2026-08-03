@@ -1,3 +1,5 @@
+"""Routes FastAPI du dialogue, de la transcription et de la synthese vocale."""
+
 from datetime import date
 import subprocess
 import tempfile

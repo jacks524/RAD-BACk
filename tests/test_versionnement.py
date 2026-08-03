@@ -1,3 +1,5 @@
+"""Tests automatises couvrant le comportement test versionnement du backend RDA."""
+
 from datetime import date
 
 from rda.paquetages.reponse.recherche import rechercher_hybride_en_memoire

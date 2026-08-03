@@ -1,3 +1,5 @@
+"""Tests automatises couvrant le comportement conftest du backend RDA."""
+
 from datetime import date
 from uuid import uuid4
 

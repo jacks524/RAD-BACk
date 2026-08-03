@@ -1,3 +1,5 @@
+"""Schemas Pydantic definissant les contrats d entree et de sortie de ce paquetage."""
+
 from datetime import datetime
 from uuid import UUID
 

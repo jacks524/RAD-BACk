@@ -1,3 +1,5 @@
+"""Tests automatises couvrant le comportement test injection du backend RDA."""
+
 import pytest
 
 from rda.paquetages.reponse.comprehension import comprendre_question

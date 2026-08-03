@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a types."""
+
 from enum import StrEnum
 
 

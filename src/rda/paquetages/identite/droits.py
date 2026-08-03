@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a droits."""
+
 from uuid import UUID
 
 from sqlalchemy import text

@@ -1,3 +1,5 @@
+"""Client HTTP vers le serveur local llama.cpp utilise quand le mode generatif LLM est active."""
+
 from typing import Any
 
 import httpx

@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a comprehension."""
+
 import re
 from dataclasses import dataclass
 from datetime import date

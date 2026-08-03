@@ -1,3 +1,5 @@
+"""Point d entree FastAPI : assemble les routeurs, charge les artefacts et demarre les services de fond."""
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI

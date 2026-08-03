@@ -1,3 +1,5 @@
+"""Agent applicatif qui coordonne les fils de travail concurrents."""
+
 from rda.noyau.etat import EtatInterne
 from rda.noyau.fils.dialogue import FilDialogue
 from rda.noyau.fils.ingestion import FilIngestion

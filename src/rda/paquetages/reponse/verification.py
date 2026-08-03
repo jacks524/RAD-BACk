@@ -1,3 +1,5 @@
+"""Module backend RDA consacre a verification."""
+
 import re
 
 from rda.commun.types import ModeReponse

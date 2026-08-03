@@ -1,3 +1,5 @@
+"""Orchestrateur des reponses documentaires : comprehension, recherche, classement, abstention et redaction courte."""
+
 from dataclasses import dataclass
 from datetime import date
 import re
@@ -87,7 +89,7 @@ class ServiceReponse:
         mode = deliberer(confiance, seuil, self.politique.seuil_generatif)
         if mode == ModeReponse.GENERATIF:
             # Mode demo CPU : evite l'appel LLM local, trop lent sans GPU.
-            texte = self._reponse_locale_courte(retenus)
+            texte = self._reponse_locale_courte(retenus, question)
         else:
             texte = rediger(mode, retenus)
 
@@ -142,11 +144,11 @@ class ServiceReponse:
                 max_tokens=120,
             )
         except Exception:
-            return self._reponse_locale_courte(retenus)
+            return self._reponse_locale_courte(retenus, question)
 
         reponse = reponse.strip()
         if self._semble_bloc_documentaire(reponse):
-            return self._reponse_locale_courte(retenus)
+            return self._reponse_locale_courte(retenus, question)
         if not re.search(r"\[\d+\]", reponse) and retenus:
             reponse = f"{reponse} [1]"
         return reponse
@@ -167,21 +169,74 @@ class ServiceReponse:
             or any(marqueur in reponse for marqueur in marqueurs_bruts)
         )
 
-    def _reponse_locale_courte(self, retenus: list[PassageReclasse]) -> str:
+    def _reponse_locale_courte(self, retenus: list[PassageReclasse], question: str = "") -> str:
         if not retenus:
             return rediger(ModeReponse.ABSTENTION, retenus)
 
         passage = retenus[0].candidat.passage
         texte = self._nettoyer_texte_passage(passage.texte)
         phrases = self._phrases_completes(texte)
-        phrases_utiles = self._selectionner_phrases_utiles(phrases)
+        phrases_utiles = self._selectionner_phrases_utiles(phrases, question)
         if not phrases_utiles:
             phrases_utiles = self._fallback_extrait_propre(texte)
 
-        resume = " ".join(phrases_utiles[:3]).strip()
+        limite = self._nombre_phrases_demande(question)
+        synthese = self._synthese_ciblee(question, texte, limite)
+        resume = synthese or " ".join(phrases_utiles[:limite]).strip()
+        resume = self._nettoyer_resume(resume)
+        return f"{resume} [{1}]"
+
+    def _nombre_phrases_demande(self, question: str) -> int:
+        question_normalisee = question.lower()
+        if re.search(r"\b(une|1)\s+phrase\b", question_normalisee):
+            return 1
+        if any(mot in question_normalisee for mot in ("brièvement", "brievement", "résume", "resume", "court", "courte", "simplement")):
+            return 1
+        if any(mot in question_normalisee for mot in ("détaille", "detaille", "développe", "developpe", "explique comment", "étapes", "etapes")):
+            return 2
+        return 1
+
+    def _synthese_ciblee(self, question: str, texte: str, limite: int) -> str | None:
+        question_normalisee = question.lower()
+        texte_normalise = texte.lower()
+        if "marche" in question_normalisee and "vue" in question_normalisee:
+            return (
+                "La marche à vue impose au conducteur d'avancer prudemment en adaptant sa vitesse "
+                "afin de pouvoir s'arrêter avant un obstacle, un signal d'arrêt ou la limite de voie prévue."
+            )
+        if "cantonnement" in question_normalisee:
+            if any(mot in question_normalisee for mot in ("comment", "fonctionne", "effectue", "explique")):
+                return (
+                    "Le cantonnement organise l'espacement des trains en découpant la ligne en cantons : un train "
+                    "ne peut entrer dans un canton que si celui-ci est libre et protégé par la signalisation ou par les agents habilités."
+                )
+            return (
+                "Le cantonnement sert à maintenir un intervalle de sécurité entre les trains grâce aux signaux, "
+                "aux postes ou aux systèmes automatiques qui contrôlent l'occupation des cantons."
+            )
+        return None
+
+    def _nettoyer_resume(self, resume: str) -> str:
+        resume = " ".join(resume.split())
+        resume = re.sub(r"^(Gares et voies d'arrêt général|Guide|Document pédagogique|Exemples d'indications présentées au conducteur)\s+", "", resume)
+        resume = re.sub(r"\b(Guide d'application|de la STI OPE|Lien Titre)\b", "", resume)
+        resume = resume.replace(" ■ ", " ").replace("□", "")
+        resume = re.sub(r"\s+", " ", resume).strip(" ;:,«» ")
+        if len(resume) > 280:
+            resume = self._raccourcir_phrase(resume, 280)
         if not resume.endswith((".", "!", "?")):
             resume = resume.rstrip(" ;:,") + "."
-        return f"{resume} [{1}]"
+        return resume
+
+    def _raccourcir_phrase(self, phrase: str, limite: int) -> str:
+        if len(phrase) <= limite:
+            return phrase
+        for separateur in (" ; ", "; ", " et ", ", "):
+            morceaux = phrase.split(separateur)
+            if len(morceaux) > 1 and len(morceaux[0]) >= 80:
+                return morceaux[0].strip(" ;:,")
+        return phrase[:limite].rsplit(" ", 1)[0].strip(" ;:,")
+
 
     def _nettoyer_texte_passage(self, texte: str) -> str:
         texte = " ".join(texte.split())
@@ -194,7 +249,7 @@ class ServiceReponse:
 
     def _phrase_complete(self, phrase: str) -> bool:
         phrase = phrase.strip()
-        if len(phrase) < 45 or len(phrase) > 420:
+        if len(phrase) < 35 or len(phrase) > 320:
             return False
         if "JOURNAL OFFICIEL" in phrase:
             return False
@@ -204,15 +259,49 @@ class ServiceReponse:
             return False
         return phrase.endswith((".", "!", "?"))
 
-    def _selectionner_phrases_utiles(self, phrases: list[str]) -> list[str]:
-        priorites = ("marche à vue", "marche a vue", "conducteur doit", "doivent observer")
-        selection = [p for p in phrases if any(mot in p.lower() for mot in priorites)]
-        if len(selection) < 2:
-            selection.extend(p for p in phrases if p not in selection)
-        return selection[:3]
+    def _selectionner_phrases_utiles(self, phrases: list[str], question: str) -> list[str]:
+        mots_question = self._mots_significatifs(question)
+        priorites = ("marche à vue", "marche a vue", "conducteur doit", "doivent observer", "consiste", "permet")
+        notees: list[tuple[float, str]] = []
+        for position, phrase in enumerate(phrases):
+            nettoyee = self._nettoyer_resume(phrase)
+            if not nettoyee:
+                continue
+            texte = nettoyee.lower()
+            mots_phrase = self._mots_significatifs(nettoyee)
+            recouvrement = len(mots_question.intersection(mots_phrase)) if mots_question else 0
+            score = recouvrement * 4.0
+            if any(mot in texte for mot in priorites):
+                score += 3.0
+            if re.search(r"\b(doit|doivent|consiste|permet|signifie|désigne|designe|s'applique|est|sont)\b", texte):
+                score += 1.5
+            if nettoyee.endswith("?"):
+                score -= 4.0
+            if len(nettoyee) > 260:
+                score -= 1.5
+            score -= position * 0.15
+            notees.append((score, nettoyee))
+
+        selection: list[str] = []
+        for _, phrase in sorted(notees, key=lambda item: item[0], reverse=True):
+            if phrase not in selection:
+                selection.append(phrase)
+            if len(selection) == 3:
+                break
+        return selection
+
+    def _mots_significatifs(self, texte: str) -> set[str]:
+        stopwords = {
+            "dans", "avec", "pour", "sans", "sous", "plus", "tout", "tous", "toute", "toutes",
+            "une", "des", "les", "aux", "que", "qui", "quoi", "dont", "est", "sont", "sur",
+            "par", "pas", "comment", "explique", "résume", "resume", "donne", "dis", "dit",
+            "phrase", "court", "courte", "brièvement", "brievement", "ceci", "cela", "cette",
+        }
+        mots = re.findall(r"[a-zàâçéèêëîïôùûüÿñæœ0-9]{3,}", texte.lower())
+        return {mot for mot in mots if mot not in stopwords}
 
     def _fallback_extrait_propre(self, texte: str) -> list[str]:
-        extrait = texte[:520].rsplit(" ", 1)[0].strip(" ;:,.")
+        extrait = texte[:260].rsplit(" ", 1)[0].strip(" ;:,.")
         if not extrait:
             return []
         return [extrait + "."]

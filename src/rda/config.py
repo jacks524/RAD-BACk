@@ -1,3 +1,5 @@
+"""Configuration applicative lue depuis les variables RDA_* et le fichier .env."""
+
 from functools import lru_cache
 from pathlib import Path
 

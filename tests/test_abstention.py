@@ -1,3 +1,5 @@
+"""Tests automatises couvrant le comportement test abstention du backend RDA."""
+
 import pytest
 
 from rda.commun.types import ModeReponse

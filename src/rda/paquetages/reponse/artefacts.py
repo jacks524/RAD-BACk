@@ -1,3 +1,5 @@
+"""Chargement des artefacts Kaggle en passages exploitables par le backend."""
+
 from __future__ import annotations
 
 import json

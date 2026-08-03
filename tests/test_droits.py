@@ -1,3 +1,5 @@
+"""Tests automatises couvrant le comportement test droits du backend RDA."""
+
 from datetime import date
 
 import pytest
