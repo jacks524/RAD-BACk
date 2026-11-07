@@ -1,0 +1,10 @@
+FROM minio/minio:RELEASE.2024-07-16T23-46-41Z AS minio
+
+FROM redis:7.2-bookworm
+
+COPY --from=minio /usr/bin/minio /usr/local/bin/minio
+
+COPY scripts/demarrer-donnees.sh /usr/local/bin/demarrer-donnees
+RUN chmod +x /usr/local/bin/demarrer-donnees
+
+CMD ["demarrer-donnees"]

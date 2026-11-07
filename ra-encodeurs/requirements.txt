@@ -1,0 +1,11 @@
+# Roue CPU de torch : evite les ~2 Go de dependances CUDA inutiles sur cette machine.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.5.1+cpu
+transformers==4.51.3
+sentence-transformers==3.4.1
+pillow>=10.3
+numpy>=1.26,<3
+fastapi>=0.111
+uvicorn[standard]>=0.30
+pydantic>=2.7

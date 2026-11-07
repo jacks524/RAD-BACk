@@ -1,8 +1,16 @@
-FROM minio/minio:RELEASE.2024-07-16T23-46-41Z AS minio
+# Reparation du 21/09/2026 : le tag « minio/minio:RELEASE.2024-07-16T23-46-41Z » a disparu
+# de Docker Hub (« pull access denied, repository does not exist »), rendant ce Dockerfile
+# inconstructible. MinIO publie desormais sur quay.io ; l'image y est disponible et deja
+# presente dans le cache local de ce poste.
+# Reparation du 25/09/2026 : sur un poste sans ce cache, quay.io repond « 401 UNAUTHORIZED »
+# pour cette reference, et dl.min.io repond « 410 Gone » (binaires precompiles retires).
+# Le binaire minio (meme version) est donc compile depuis les sources publiees sur GitHub.
+FROM golang:1.24-bookworm AS minio
+RUN CGO_ENABLED=0 GOBIN=/out go install github.com/minio/minio@RELEASE.2025-09-07T16-13-09Z
 
 FROM redis:7.2-bookworm
 
-COPY --from=minio /usr/bin/minio /usr/local/bin/minio
+COPY --from=minio /out/minio /usr/local/bin/minio
 
 COPY scripts/demarrer-donnees.sh /usr/local/bin/demarrer-donnees
 RUN chmod +x /usr/local/bin/demarrer-donnees

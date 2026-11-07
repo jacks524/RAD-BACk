@@ -1,0 +1,57 @@
+[
+  {
+    "matricule": "T-DMAT-001",
+    "courriel": "technicien.dmat@test",
+    "nom": "Technicien",
+    "prenom": "DMAT",
+    "poste": "TECHNICIEN_MATERIEL",
+    "structure": "DMAT",
+    "statut": "ACTIF",
+    "empreinte_mdp": "05468e12f3fdb25c263a526ee8a30f99041ae094c9667b2f4d2001ddcd43b9d3",
+    "groupes_poste": [
+      "G_DMAT"
+    ],
+    "habilitations_exception": [],
+    "roles": [
+      "AGENT"
+    ],
+    "date_creation": "2026-09-21T15:35:08.561632+00:00"
+  },
+  {
+    "matricule": "T-DIF-001",
+    "courriel": "technicien.dif@test",
+    "nom": "Technicien",
+    "prenom": "DIF",
+    "poste": "TECHNICIEN_INSTALLATIONS",
+    "structure": "DIF",
+    "statut": "ACTIF",
+    "empreinte_mdp": "7818bde4e6ca107211221cc3ae2e2154e2696012a725f0441f868b12a1324a4c",
+    "groupes_poste": [
+      "G_DIF"
+    ],
+    "habilitations_exception": [],
+    "roles": [
+      "AGENT"
+    ],
+    "date_creation": "2026-09-21T15:35:08.561632+00:00"
+  },
+  {
+    "matricule": "S-001",
+    "courriel": "securite@test",
+    "nom": "Agent",
+    "prenom": "Sécurité",
+    "poste": "AGENT_SECURITE",
+    "structure": "CI",
+    "statut": "ACTIF",
+    "empreinte_mdp": "065f530aec44fdbbb87c8356b9d097298e85aa3d34daa58ecb63f9efc25064af",
+    "groupes_poste": [
+      "G_DMAT",
+      "G_DIF"
+    ],
+    "habilitations_exception": [],
+    "roles": [
+      "AGENT"
+    ],
+    "date_creation": "2026-09-21T15:35:08.561632+00:00"
+  }
+]

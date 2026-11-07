@@ -17,9 +17,12 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - /mnt/kalati/Camrail-Challenge/kalati-data/artefacts:/app/artefacts:ro
-      - /mnt/kalati/Camrail-Challenge/kalati-data/identite-demo:/app/identite-demo
-      - /mnt/kalati/Camrail-Challenge/kalati-data/modeles:/app/modeles
+      - "C:/Users/ngoap/Pictures/RDA-F/kalati-data/artefacts:/app/artefacts:ro"
+      - "C:/Users/ngoap/Pictures/RDA-F/kalati-data/identite-demo:/app/identite-demo"
+      - "C:/Users/ngoap/Pictures/RDA-F/kalati-data/modeles:/app/modeles"
+      # Module RA : artefacts en lecture seule, depot des photos terrain.
+      - "${RA_DATA:-C:/Users/ngoap/Pictures/RDA-F/RDA/rda-data}/artefacts:/ra-data/artefacts:ro"
+      - "${RA_DATA:-C:/Users/ngoap/Pictures/RDA-F/RDA/rda-data}/uploads:/ra-data/uploads"
     networks:
       - rda-app
       - rda-corpus
@@ -42,7 +45,70 @@ services:
         "--batch-size", "256"
       ]
     volumes:
-      - /mnt/kalati/Camrail-Challenge/kalati-data/modeles:/models:ro
+      - "${RA_DATA:-C:/Users/ngoap/Pictures/RDA-F/RDA/rda-data}/modeles:/models:ro"
+    networks:
+      - rda-app
+
+  # --------------------------------------------------------------------------------
+  # Module RA. Profil « ra » : « docker compose up » demarre KALATI seul, exactement
+  # comme avant ; « docker compose --profile ra up » y ajoute les deux services de ce
+  # module. Aucun port publie — ils ne sont joignables que depuis le reseau interne.
+  # rda-agent ne les declare pas en depends_on a dessein : l'API doit demarrer et
+  # repondre meme si le module RA est eteint.
+  # --------------------------------------------------------------------------------
+
+  ra-vision:
+    profiles: ["ra"]
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: ra-vision
+    command:
+      [
+        "-m", "/modeles/${RA_VISION_MODELE:-Qwen2.5-VL-3B-Instruct-Q4_K_M.gguf}",
+        "--mmproj", "/modeles/${RA_VISION_MMPROJ:-mmproj-Qwen2.5-VL-3B-Instruct-f16.gguf}",
+        "--host", "0.0.0.0",
+        "--port", "8080",
+        "--threads", "${RA_VISION_THREADS:-4}",
+        "--ctx-size", "${RA_VISION_CTX:-16384}",
+        # Une seule requete a la fois : llama.cpp partage le contexte entre ses slots,
+        # et une reponse citee avec deux images depasse largement le quart de 16384.
+        "--parallel", "1",
+        "--batch-size", "256"
+      ]
+    volumes:
+      - "${RA_DATA:-C:/Users/ngoap/Pictures/RDA-F/RDA/rda-data}/modeles:/modeles:ro"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 180s
+    mem_limit: ${RA_VISION_MEMOIRE:-6g}
+    restart: unless-stopped
+    networks:
+      - rda-app
+
+  ra-encodeurs:
+    profiles: ["ra"]
+    build:
+      context: ./ra-encodeurs
+      dockerfile: Dockerfile
+    container_name: ra-encodeurs
+    environment:
+      RA_MODELE_TEXTE: ${RA_MODELE_TEXTE:-intfloat/multilingual-e5-base}
+      RA_MODELE_VISUEL: ${RA_MODELE_VISUEL:-google/siglip2-base-patch16-384}
+      RA_MODELE_RECLASSEUR: ${RA_MODELE_RECLASSEUR:-cross-encoder/mmarco-mMiniLMv2-L12-H384-v1}
+      RA_THREADS_TORCH: ${RA_THREADS_TORCH:-4}
+    volumes:
+      # Cache Hugging Face sur le disque externe : un redemarrage ne retelecharge rien.
+      - "${RA_DATA:-C:/Users/ngoap/Pictures/RDA-F/RDA/rda-data}/hf-cache:/hf-cache"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8082/sante', timeout=5).status==200 else 1)\""]
+      interval: 15s
+      timeout: 10s
+      retries: 40
+      start_period: 300s
+    mem_limit: ${RA_ENCODEURS_MEMOIRE:-5g}
+    restart: unless-stopped
     networks:
       - rda-app
 
@@ -59,7 +125,7 @@ services:
       timeout: 3s
       retries: 20
     volumes:
-      - /mnt/kalati/Camrail-Challenge/kalati-data/postgres/corpus:/var/lib/postgresql/data
+      - "C:/Users/ngoap/Pictures/RDA-F/kalati-data/postgres/corpus:/var/lib/postgresql/data"
     networks:
       - rda-corpus
 
@@ -76,7 +142,7 @@ services:
       timeout: 3s
       retries: 20
     volumes:
-      - /mnt/kalati/Camrail-Challenge/kalati-data/postgres/identite:/var/lib/postgresql/data
+      - "C:/Users/ngoap/Pictures/RDA-F/kalati-data/postgres/identite:/var/lib/postgresql/data"
     networks:
       - rda-identite
 
@@ -93,7 +159,7 @@ services:
       timeout: 3s
       retries: 20
     volumes:
-      - /mnt/kalati/Camrail-Challenge/kalati-data/postgres/intelligence:/var/lib/postgresql/data
+      - "C:/Users/ngoap/Pictures/RDA-F/kalati-data/postgres/intelligence:/var/lib/postgresql/data"
     networks:
       - rda-intelligence
 
@@ -110,14 +176,14 @@ services:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - /mnt/kalati/Camrail-Challenge/kalati-data/redis:/data/redis
-      - /mnt/kalati/Camrail-Challenge/kalati-data/minio:/data/minio
+      - "C:/Users/ngoap/Pictures/RDA-F/kalati-data/redis:/data/redis"
+      - "C:/Users/ngoap/Pictures/RDA-F/kalati-data/minio:/data/minio"
     networks:
       - rda-donnees
 
   rda-front-admin:
     build:
-      context: /mnt/kalati/Camrail-Challenge/RAD-FRONT/kalati_admin
+      context: "E:/Camrail-Challenge/RAD-FRONT/kalati_admin"
       dockerfile: Dockerfile
       args:
         KALATI_API_BASE_URL: http://localhost:8000/api/v1
@@ -129,13 +195,13 @@ services:
 
   rda-front-agent:
     build:
-      context: /mnt/kalati/Camrail-Challenge/RAD-FRONT/kalati_agent
+      context: "E:/Camrail-Challenge/RAD-FRONT/kalati_agent"
       dockerfile: Dockerfile
       args:
         KALATI_API_BASE_URL: http://localhost:8000/api/v1
     container_name: rda-front-agent
     volumes:
-      - /mnt/kalati/Camrail-Challenge/kalati-data/builds-agent:/sorties
+      - "C:/Users/ngoap/Pictures/RDA-F/kalati-data/builds-agent:/sorties"
     networks:
       - rda-app
 

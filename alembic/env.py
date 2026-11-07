@@ -26,7 +26,9 @@ url = {
 }[base]
 
 if url:
-    config.set_main_option("sqlalchemy.url", url.replace("+asyncpg", ""))
+    # « postgresql:// » fait chercher psycopg2 a SQLAlchemy, absent du projet : c'est psycopg
+    # (version 3) qui est declare dans pyproject.toml. On nomme donc le pilote explicitement.
+    config.set_main_option("sqlalchemy.url", url.replace("+asyncpg", "+psycopg"))
 
 target_metadata = metadonnees
 
